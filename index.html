@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>یاری دڵی مەلەک</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: #fce4ec;
+    font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", "Noto Sans Arabic", sans-serif;
+    color: #7a2e45;
+    overflow: hidden;
+  }
+  body::before {
+    content: "🌸 🎀 🌷 🎀 🌸 🎀 🌷 🎀 🌸 🎀 🌷 🎀";
+    position: fixed; inset: 0;
+    font-size: 28px; line-height: 90px; letter-spacing: 38px;
+    opacity: .18; word-break: break-all; pointer-events: none;
+  }
+  .app {
+    position: relative;
+    width: 100%; max-width: 420px; height: 100vh; max-height: 860px;
+    background: linear-gradient(180deg, #fff5f8 0%, #fce4ec 100%);
+    padding: 14px 16px 16px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 40px rgba(249,168,182,.5);
+    overflow: hidden;
+  }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 6px 4px 12px; }
+  .close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #fff; border: 2px solid #f9a8b6; color: #e0607e;
+    font-size: 16px; font-weight: bold; cursor: pointer;
+  }
+  .title { font-size: 20px; font-weight: 800; color: #d6416a; }
+  .dots { display: flex; gap: 6px; }
+  .dots span { width: 11px; height: 11px; border-radius: 50%; }
+  .dots span:nth-child(1) { background: #ff5f57; }
+  .dots span:nth-child(2) { background: #febc2e; }
+  .dots span:nth-child(3) { background: #28c840; }
+
+  .score {
+    display: flex; justify-content: space-around;
+    background: #fff; border-radius: 16px; padding: 10px;
+    border: 2px solid #f9a8b6; margin-bottom: 14px;
+    font-weight: 700; font-size: 15px;
+  }
+  .score b { color: #d6416a; }
+
+  .grid {
+    flex: 1;
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 12px;
+  }
+  .card { perspective: 600px; cursor: pointer; }
+  .inner { position: relative; width: 100%; height: 100%; transition: transform .45s; transform-style: preserve-3d; }
+  .card.flipped .inner { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(214,65,106,.2);
+  }
+  .front { background: linear-gradient(135deg, #f9a8b6, #f48fb1); color: #fff; font-size: 30px; border: 3px solid #fff; }
+  .back { background: #fff; transform: rotateY(180deg); font-size: 42px; border: 3px solid #f9a8b6; }
+  .card.matched .back { background: #fff0f4; border-color: #e0607e; animation: pop .5s; }
+  @keyframes pop { 50% { transform: rotateY(180deg) scale(1.12); } }
+
+  footer { text-align: center; font-size: 14px; opacity: .85; padding-top: 4px; line-height: 1.8; }
+
+  /* دڵی فڕیوو */
+  .float {
+    position: absolute; bottom: -30px; font-size: 24px; pointer-events: none;
+    animation: up 3.2s ease-out forwards; z-index: 20;
+  }
+  @keyframes up { to { transform: translateY(-110vh) rotate(25deg); opacity: 0; } }
+
+  .modal {
+    position: absolute; inset: 0; background: rgba(122,46,69,.45);
+    display: flex; align-items: flex-end;
+    transform: translateY(100%); transition: transform .5s ease; z-index: 10;
+  }
+  .modal.show { transform: translateY(0); }
+  .sheet {
+    width: 100%; height: 88%; background: #fff5f8;
+    border-radius: 28px 28px 0 0; padding: 18px;
+    display: flex; flex-direction: column;
+    border-top: 4px solid #f9a8b6; overflow: hidden;
+  }
+  .slides { flex: 1; position: relative; touch-action: pan-y; }
+  .slide {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; text-align: center; gap: 14px;
+    opacity: 0; transform: translateX(40px); pointer-events: none;
+    transition: opacity .4s, transform .4s;
+  }
+  .slide.active { opacity: 1; transform: none; pointer-events: auto; }
+  .slide h2 { font-size: 20px; color: #d6416a; line-height: 1.6; }
+  .art {
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, #fff 40%, #fcd1dc);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 72px; border: 4px solid #f9a8b6;
+    box-shadow: 0 6px 18px rgba(214,65,106,.25);
+    animation: beat 2s ease-in-out infinite;
+  }
+  @keyframes beat { 50% { transform: scale(1.05); } }
+  .slide p { font-size: 17px; line-height: 2.1; padding: 0 6px; overflow-y: auto; }
+  .nav { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; }
+  .nav button {
+    background: #e0607e; color: #fff; border: 0; border-radius: 22px;
+    padding: 11px 24px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .nav button.ghost { background: #fff; color: #e0607e; border: 2px solid #f9a8b6; }
+  .nav button:disabled { opacity: .4; }
+  .counter { font-weight: 800; color: #d6416a; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <button class="close" onclick="resetGame()">✕</button>
+    <div class="title" id="gameTitle"></div>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </header>
+
+  <div class="score">
+    <div>جووتەکان: <b id="matches">0</b> / 6</div>
+    <div>هەوڵەکان: <b id="attempts">0</b></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <footer id="footerText"></footer>
+
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <div class="slides" id="slides"></div>
+      <div class="nav">
+        <button id="nextBtn">دواتر</button>
+        <div class="counter"><span id="cur">1</span> / <span id="total">5</span></div>
+        <button class="ghost" id="prevBtn">پێشوو</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== ناو و دەقەکان لێرە دەگۆڕدرێن ===== */
+const NAME = "مەلەک";
+
+const MESSAGES = [
+  {
+    title: "پەیامی ڕۆح و شیعری دڵم...",
+    art: "🐻🤍🐻",
+    text: NAME + "ی گیان، تۆ ئەو ناوەیت کە هەر کە دەیڵێمەوە دڵم بە ئارامی دەلەرزێت. هەموو ڕۆژێکم بە بیرکردنەوە لە تۆ دەست پێدەکات و بە خەون بینین پێت کۆتایی دێت."
+  },
+  {
+    title: NAME + "ی دڵم",
+    art: "🐻🐻",
+    text: "لە تەنیشت تۆدا کات خاو دەبێتەوە و دنیا جوانتر دەبێت. بزەکەت ئەو ڕووناکییەیە کە ڕێگای منی پێ ڕوون دەبێتەوە، ئەی ئەو کەسەی هەموو شتێکم بە تۆ جوانە."
+  },
+  {
+    title: "ئامێزی گەرمم",
+    art: "🧸🛏️",
+    text: "ئەگەر ڕۆژێک ماندوو بوویت، بیرت بێت ئامێزی من هەمیشە بۆ تۆ کراوەیە، وەک پەتوویەکی نەرم و گەرم لە شەوێکی سارددا. " + NAME + "م، تۆ شایەنی هەموو ئارامییەکیت."
+  },
+  {
+    title: "ئەستێرەی ئاسمانم",
+    art: "🐻✨",
+    text: "شەوانە سەیری ئەستێرەکان دەکەم و هیچیان وەک چاوەکانی تۆ ناگەشێنەوە. ئەستێرەکان لە ئاسمانن، بەڵام تۆ ئەستێرەی ناو دڵی منیت."
+  },
+  {
+    title: "هەمیشە لەگەڵتم",
+    art: "🐻💖",
+    text: "ئەمە تەنها یارییەکی بچووک بوو، بەڵام ڕاستییەکەی ئەوەیە: " + NAME + "ی خۆشەویستم، من تۆم خۆش دەوێت، ئەمڕۆ و سبەی و هەمیشە. 💖"
+  }
+];
+
+const ICONS = ["🍓", "🧸", "💍", "🌸", "💌", "💖"];
+/* ======================================== */
+
+document.getElementById("gameTitle").textContent = "یاری دڵی " + NAME + " 💗";
+document.getElementById("footerText").textContent = "جووتەکان بدۆزەرەوە " + NAME + "م، نامەیەکت چاوەڕێیە 💌";
+
+const app = document.getElementById("app");
+const grid = document.getElementById("grid");
+const matchesEl = document.getElementById("matches");
+const attemptsEl = document.getElementById("attempts");
+const modal = document.getElementById("modal");
+const slidesEl = document.getElementById("slides");
+let first = null, lock = false, matches = 0, attempts = 0, idx = 0;
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function hearts(n) {
+  for (let i = 0; i < n; i++) {
+    const h = document.createElement("div");
+    h.className = "float";
+    h.textContent = ["💗", "💖", "💕", "🌸"][Math.floor(Math.random() * 4)];
+    h.style.left = Math.random() * 90 + "%";
+    h.style.animationDelay = Math.random() * 0.6 + "s";
+    app.appendChild(h);
+    setTimeout(() => h.remove(), 4000);
+  }
+}
+
+function buildGame() {
+  grid.innerHTML = "";
+  matches = 0; attempts = 0; first = null; lock = false;
+  matchesEl.textContent = 0; attemptsEl.textContent = 0;
+  shuffle([...ICONS, ...ICONS]).forEach(icon => {
+    const c = document.createElement("div");
+    c.className = "card";
+    c.dataset.icon = icon;
+    c.innerHTML = '<div class="inner"><div class="face front">💗</div><div class="face back">' + icon + '</div></div>';
+    c.addEventListener("click", () => flip(c));
+    grid.appendChild(c);
+  });
+}
+
+function flip(c) {
+  if (lock || c.classList.contains("flipped")) return;
+  c.classList.add("flipped");
+  if (!first) { first = c; return; }
+  attempts++; attemptsEl.textContent = attempts;
+  if (first.dataset.icon === c.dataset.icon) {
+    first.classList.add("matched"); c.classList.add("matched");
+    first = null; matches++; matchesEl.textContent = matches;
+    hearts(4);
+    if (matches === 6) setTimeout(() => { hearts(18); setTimeout(openMessages, 900); }, 500);
+  } else {
+    lock = true;
+    const a = first; first = null;
+    setTimeout(() => { a.classList.remove("flipped"); c.classList.remove("flipped"); lock = false; }, 800);
+  }
+}
+
+function buildSlides() {
+  slidesEl.innerHTML = "";
+  MESSAGES.forEach(m => {
+    const s = document.createElement("div");
+    s.className = "slide";
+    s.innerHTML = '<h2>' + m.title + '</h2><div class="art">' + m.art + '</div><p>' + m.text + '</p>';
+    slidesEl.appendChild(s);
+  });
+  document.getElementById("total").textContent = MESSAGES.length;
+}
+
+function show(i) {
+  idx = i;
+  [...slidesEl.children].forEach((s, k) => s.classList.toggle("active", k === i));
+  document.getElementById("cur").textContent = i + 1;
+  document.getElementById("prevBtn").disabled = i === 0;
+  document.getElementById("nextBtn").textContent = i === MESSAGES.length - 1 ? "کۆتایی" : "دواتر";
+}
+
+function openMessages() { show(0); modal.classList.add("show"); }
+function resetGame() { modal.classList.remove("show"); setTimeout(buildGame, 400); }
+
+document.getElementById("nextBtn").onclick = () => {
+  if (idx < MESSAGES.length - 1) show(idx + 1); else resetGame();
+};
+document.getElementById("prevBtn").onclick = () => { if (idx > 0) show(idx - 1); };
+
+let startX = null;
+slidesEl.addEventListener("touchstart", e => { startX = e.touches[0].clientX; });
+slidesEl.addEventListener("touchend", e => {
+  if (startX === null) return;
+  const dx = e.changedTouches[0].clientX - startX;
+  if (Math.abs(dx) > 50) {
+    if (dx < 0 && idx < MESSAGES.length - 1) show(idx + 1);
+    if (dx > 0 && idx > 0) show(idx - 1);
+  }
+  startX = null;
+});
+
+buildSlides();
+buildGame();
+</script>
+</body>
+</html>
+
